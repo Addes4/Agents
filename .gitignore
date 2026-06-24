@@ -1,0 +1,40 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Virtual environments
+.venv/
+venv/
+env/
+ENV/
+
+# Local environment and secrets
+.env
+.env.*
+!.env.example
+
+# Streamlit
+.streamlit/secrets.toml
+
+# Runtime databases and local app state
+*.sqlite
+*.sqlite3
+*.db
+
+# macOS
+.DS_Store
+
+# Editors and IDEs
+.idea/
+.vscode/
+
+# Build/package artifacts
+build/
+dist/
+*.egg-info/
