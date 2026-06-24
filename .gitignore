@@ -23,6 +23,7 @@ ENV/
 .streamlit/secrets.toml
 
 # Runtime databases and local app state
+.local/
 *.sqlite
 *.sqlite3
 *.db

@@ -2,7 +2,7 @@
 
 A local Streamlit prototype for a synthetic private credit investment committee.
 
-The app lets you create or load a demo deal, run an advisory-only multi-agent credit committee, and generate an IC pack with risk views, diligence questions, approval conditions, and a human decision note.
+The app lets you create or load a demo deal, run an advisory-only multi-agent credit committee, and generate an IC memo with first-round views, challenge-round debate, scorecards, chair synthesis, diligence questions, approval conditions, and a human decision note.
 
 ## Run
 
@@ -19,6 +19,14 @@ By default the app runs in deterministic mock mode. To use OpenAI-backed agent r
 export OPENAI_API_KEY=...
 export OPENAI_MODEL=gpt-4.1-mini
 streamlit run app.py
+```
+
+OpenAI mode runs a full debate workflow: 10 first-round agent calls, 10 challenge-round calls, and 1 chair synthesis call per committee run.
+
+Runtime data is stored locally in `.local/credit_committee.sqlite3` by default. To use another path, set:
+
+```bash
+export CREDIT_COMMITTEE_DB=/path/to/credit_committee.sqlite3
 ```
 
 ## Safety Note

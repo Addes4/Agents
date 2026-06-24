@@ -1,16 +1,26 @@
 from __future__ import annotations
 
 import json
+import os
 import sqlite3
 from pathlib import Path
 
-from credit_committee.models import AgentResult, CommitteeRun, Deal
+from credit_committee.models import (
+    AgentChallengeResult,
+    AgentResult,
+    AggregateScorecard,
+    ChairSynthesis,
+    CommitteeRun,
+    Deal,
+)
 
 
-DB_PATH = Path("credit_committee.sqlite3")
+DB_PATH = Path(os.getenv("CREDIT_COMMITTEE_DB", ".local/credit_committee.sqlite3"))
 
 
 def connect(path: Path = DB_PATH) -> sqlite3.Connection:
+    if path != Path(":memory:"):
+        path.parent.mkdir(parents=True, exist_ok=True)
     conn = sqlite3.connect(path)
     conn.row_factory = sqlite3.Row
     init_db(conn)
@@ -65,6 +75,7 @@ def get_deal(conn: sqlite3.Connection, deal_id: str) -> Deal | None:
 
 
 def save_run(conn: sqlite3.Connection, run: CommitteeRun) -> None:
+    payload = json.dumps(run.to_dict())
     conn.execute(
         """
         INSERT OR REPLACE INTO committee_runs
@@ -76,7 +87,7 @@ def save_run(conn: sqlite3.Connection, run: CommitteeRun) -> None:
             run.deal_id,
             run.mode,
             run.created_at,
-            json.dumps([result.to_dict() for result in run.agent_results]),
+            payload,
             run.ic_pack_markdown,
         ),
     )
@@ -111,6 +122,26 @@ def get_human_decision(conn: sqlite3.Connection, run_id: str) -> str:
 
 
 def _row_to_run(row: sqlite3.Row) -> CommitteeRun:
+    payload = json.loads(row["agent_results"])
+    if isinstance(payload, dict):
+        return CommitteeRun(
+            id=payload.get("id", row["id"]),
+            deal_id=payload.get("deal_id", row["deal_id"]),
+            mode=payload.get("mode", row["mode"]),
+            created_at=payload.get("created_at", row["created_at"]),
+            agent_results=[
+                AgentResult.from_dict(value)
+                for value in payload.get("agent_results", [])
+            ],
+            challenge_results=[
+                AgentChallengeResult.from_dict(value)
+                for value in payload.get("challenge_results", [])
+            ],
+            aggregate_scorecard=AggregateScorecard.from_dict(payload.get("aggregate_scorecard")),
+            chair_synthesis=ChairSynthesis.from_dict(payload.get("chair_synthesis")),
+            ic_pack_markdown=payload.get("ic_pack_markdown", row["ic_pack_markdown"]),
+        )
+
     return CommitteeRun(
         id=row["id"],
         deal_id=row["deal_id"],
@@ -118,7 +149,10 @@ def _row_to_run(row: sqlite3.Row) -> CommitteeRun:
         created_at=row["created_at"],
         agent_results=[
             AgentResult.from_dict(value)
-            for value in json.loads(row["agent_results"])
+            for value in payload
         ],
+        challenge_results=[],
+        aggregate_scorecard=AggregateScorecard(),
+        chair_synthesis=ChairSynthesis(),
         ic_pack_markdown=row["ic_pack_markdown"],
     )
